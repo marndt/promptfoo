@@ -1,5 +1,6 @@
 import { fetchWithCache } from '../../cache';
 import logger from '../../logger';
+import { formatConnectionErrorMessage } from '../../util/fetch/errors';
 import { REQUEST_TIMEOUT_MS } from '../shared';
 import { OpenAiGenericProvider } from '.';
 import { getTokenUsage } from './util';
@@ -11,7 +12,7 @@ export class OpenAiEmbeddingProvider extends OpenAiGenericProvider {
     // Validate API key first (like chat provider)
     if (this.requiresApiKey() && !this.getApiKey()) {
       return {
-        error: `API key is not set. Set the ${this.config.apiKeyEnvar || 'OPENAI_API_KEY'} environment variable or add \`apiKey\` to the provider config.`,
+        error: this.getApiKeyErrorMessage(),
       };
     }
 
@@ -62,8 +63,9 @@ export class OpenAiEmbeddingProvider extends OpenAiGenericProvider {
     } catch (err) {
       logger.error(`API call error: ${String(err)}`);
       await deleteFromCache?.();
+      const errorMessage = formatConnectionErrorMessage(err) ?? `API call error: ${String(err)}`;
       return {
-        error: `API call error: ${String(err)}`,
+        error: errorMessage,
       };
     }
 

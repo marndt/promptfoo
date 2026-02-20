@@ -1,5 +1,6 @@
 import { fetchWithCache } from '../../cache';
 import logger from '../../logger';
+import { formatConnectionErrorMessage } from '../../util/fetch/errors';
 import { ellipsize } from '../../util/text';
 import { REQUEST_TIMEOUT_MS } from '../shared';
 import { OpenAiGenericProvider } from '.';
@@ -374,9 +375,7 @@ export class OpenAiImageProvider extends OpenAiGenericProvider {
     _callApiOptions?: CallApiOptionsParams,
   ): Promise<ProviderResponse> {
     if (this.requiresApiKey() && !this.getApiKey()) {
-      throw new Error(
-        'OpenAI API key is not set. Set the OPENAI_API_KEY environment variable or add `apiKey` to the provider config.',
-      );
+      throw new Error(this.getApiKeyErrorMessage());
     }
 
     const config = {
@@ -431,8 +430,9 @@ export class OpenAiImageProvider extends OpenAiGenericProvider {
     } catch (err) {
       logger.error(`API call error: ${String(err)}`);
       await data?.deleteFromCache?.();
+      const errorMessage = formatConnectionErrorMessage(err) ?? `API call error: ${String(err)}`;
       return {
-        error: `API call error: ${String(err)}`,
+        error: errorMessage,
       };
     }
 

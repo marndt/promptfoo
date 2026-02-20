@@ -73,6 +73,23 @@ describe('OpenAI Provider', () => {
       expect(result.error).toContain('Network error');
     });
 
+    it('should return friendly message when connection refused to localhost', async () => {
+      const err = new Error('fetch failed');
+      (err as any).cause = { code: 'ECONNREFUSED' };
+      mockFetchWithCache.mockRejectedValueOnce(err);
+
+      const provider = new OpenAiCompletionProvider('text-davinci-003', {
+        config: {
+          apiBaseUrl: 'http://localhost:8080/v1',
+          apiKeyRequired: false,
+        },
+      });
+      const result = await provider.callApi('Test prompt');
+
+      expect(result.error).toContain('Could not reach the server');
+      expect(result.error).toContain('Is it running?');
+    });
+
     it('should handle missing API key', async () => {
       // Save the original env var and clear it for this test
       const originalApiKey = process.env.OPENAI_API_KEY;
@@ -88,7 +105,7 @@ describe('OpenAI Provider', () => {
           },
         });
 
-        await expect(provider.callApi('Test prompt')).rejects.toThrow('OpenAI API key is not set');
+        await expect(provider.callApi('Test prompt')).rejects.toThrow('API key is not set');
       } finally {
         // Restore the original env var
         if (originalApiKey) {

@@ -1,5 +1,6 @@
 import { fetchWithCache, getCache, isCacheEnabled } from '../../cache';
 import logger from '../../logger';
+import { formatConnectionErrorMessage } from '../../util/fetch/errors';
 import { REQUEST_TIMEOUT_MS } from '../shared';
 import { OpenAiGenericProvider } from '.';
 
@@ -184,9 +185,7 @@ export class OpenAiModerationProvider
   ): Promise<ProviderModerationResponse> {
     const apiKey = this.getApiKey();
     if (this.requiresApiKey() && !apiKey) {
-      return handleApiError(
-        'OpenAI API key is not set. Set the OPENAI_API_KEY environment variable or add `apiKey` to the provider config.',
-      );
+      return handleApiError(this.getApiKeyErrorMessage());
     }
 
     const useCache = isCacheEnabled();
@@ -251,6 +250,11 @@ export class OpenAiModerationProvider
 
       return response;
     } catch (err) {
+      const friendlyMessage = formatConnectionErrorMessage(err);
+      if (friendlyMessage) {
+        logger.error(`API call error: ${String(err)}`);
+        return { error: friendlyMessage };
+      }
       return handleApiError(err);
     }
   }

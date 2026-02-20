@@ -174,7 +174,7 @@ describe('OpenAiModerationProvider', () => {
 
       // Verify we got an error response with the expected message
       expect(result).toHaveProperty('error');
-      expect(result.error).toContain('OpenAI API key is not set');
+      expect(result.error).toContain('API key is not set');
       expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('API error'));
     });
 

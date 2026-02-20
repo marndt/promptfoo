@@ -3,6 +3,7 @@ import path from 'path';
 
 import { fetchWithCache } from '../../cache';
 import logger from '../../logger';
+import { formatConnectionErrorMessage } from '../../util/fetch/errors';
 import { REQUEST_TIMEOUT_MS } from '../shared';
 import { OpenAiGenericProvider } from './';
 import { OPENAI_TRANSCRIPTION_MODELS } from './util';
@@ -67,9 +68,7 @@ export class OpenAiTranscriptionProvider extends OpenAiGenericProvider {
     _callApiOptions?: CallApiOptionsParams,
   ): Promise<ProviderResponse> {
     if (!this.getApiKey()) {
-      throw new Error(
-        'OpenAI API key is not set. Set the OPENAI_API_KEY environment variable or add `apiKey` to the provider config.',
-      );
+      throw new Error(this.getApiKeyErrorMessage());
     }
 
     const config = {
@@ -154,8 +153,9 @@ export class OpenAiTranscriptionProvider extends OpenAiGenericProvider {
         }
       } catch (err) {
         logger.error('API call error', { error: err });
+        const errorMessage = formatConnectionErrorMessage(err) ?? `API call error: ${String(err)}`;
         return {
-          error: `API call error: ${String(err)}`,
+          error: errorMessage,
         };
       }
 

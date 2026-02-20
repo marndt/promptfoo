@@ -60,6 +60,24 @@ describe('OpenAI Provider', () => {
       expect(result.embedding).toBeUndefined();
     });
 
+    it('should return friendly message when connection refused to localhost', async () => {
+      const localProvider = new OpenAiEmbeddingProvider('text-embedding-3-large', {
+        config: {
+          apiBaseUrl: 'http://localhost:8080/v1',
+          apiKeyRequired: false,
+          apiKey: 'test-key',
+        },
+      });
+      const err = new Error('fetch failed');
+      (err as any).cause = { code: 'ECONNREFUSED' };
+      vi.mocked(fetchWithCache).mockRejectedValueOnce(err);
+
+      const result = await localProvider.callEmbeddingApi('test text');
+
+      expect(result.error).toContain('Could not reach the server');
+      expect(result.error).toContain('Is it running?');
+    });
+
     it('should validate input type', async () => {
       const result = await provider.callEmbeddingApi({ message: 'test' } as any);
       expect(result.error).toBe(

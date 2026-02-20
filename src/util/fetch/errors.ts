@@ -45,3 +45,40 @@ export function isTransientConnectionError(error: Error | undefined): boolean {
     message.includes('socket hang up')
   );
 }
+
+/**
+ * Detect connection-refused or host-unreachable errors (e.g. local server not running).
+ * Used to show a friendlier message when apiBaseUrl points at localhost.
+ */
+export function isConnectionRefusedError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') {
+    return false;
+  }
+  const code = (error as SystemError).code ?? (error as { cause?: SystemError }).cause?.code;
+  const message = String((error as Error).message ?? '').toLowerCase();
+  return (
+    code === 'ECONNREFUSED' ||
+    code === 'ENOTFOUND' ||
+    message.includes('econnrefused') ||
+    message.includes('enotfound')
+  );
+}
+
+/**
+ * Returns a user-friendly connection error message when the error is connection-refused
+ * or host-unreachable. ECONNREFUSED gets "Is the server running?"; ENOTFOUND gets
+ * "Check the URL and that the host is reachable." Returns null otherwise.
+ * The URL is intentionally omitted from the message to avoid leaking credentials.
+ */
+export function formatConnectionErrorMessage(error: unknown): string | null {
+  if (!isConnectionRefusedError(error)) {
+    return null;
+  }
+  const code = (error as SystemError).code ?? (error as { cause?: SystemError }).cause?.code;
+  const message = String((error as Error).message ?? '').toLowerCase();
+  const isRefused = code === 'ECONNREFUSED' || message.includes('econnrefused');
+  if (isRefused) {
+    return `Could not reach the server. Is it running? (${String(error)})`;
+  }
+  return `Could not reach the server. Check the URL and that the host is reachable. (${String(error)})`;
+}

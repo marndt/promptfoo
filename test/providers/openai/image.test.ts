@@ -124,7 +124,7 @@ describe('OpenAiImageProvider', () => {
 
         // Attempt to call the API should throw an error
         await expect(provider.callApi('Generate a cat')).rejects.toThrow(
-          'OpenAI API key is not set. Set the OPENAI_API_KEY environment variable or add `apiKey` to the provider config.',
+          'API key is not set. Set the OPENAI_API_KEY environment variable or add `apiKey` to the provider config.',
         );
       } finally {
         // Restore the original environment variable
@@ -147,7 +147,7 @@ describe('OpenAiImageProvider', () => {
       const result = await provider.callApi('test prompt');
 
       expect(result).toHaveProperty('error');
-      expect(result.error).toContain('OpenAI API key is not set');
+      expect(result.error).toContain('API key is not set');
     });
 
     it('should handle API errors', async () => {

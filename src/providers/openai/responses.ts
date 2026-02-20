@@ -1,6 +1,7 @@
 import { fetchWithCache } from '../../cache';
 import { getEnvFloat, getEnvInt, getEnvString } from '../../envars';
 import logger from '../../logger';
+import { formatConnectionErrorMessage } from '../../util/fetch/errors';
 import {
   maybeLoadResponseFormatFromExternalFile,
   maybeLoadToolsFromExternalFile,
@@ -291,9 +292,7 @@ export class OpenAiResponsesProvider extends OpenAiGenericProvider {
     callApiOptions?: CallApiOptionsParams,
   ): Promise<ProviderResponse> {
     if (!this.getApiKey()) {
-      throw new Error(
-        'OpenAI API key is not set. Set the OPENAI_API_KEY environment variable or add `apiKey` to the provider config.',
-      );
+      throw new Error(this.getApiKeyErrorMessage());
     }
 
     const { body, config } = await this.getOpenAiBody(prompt, context, callApiOptions);
@@ -423,8 +422,9 @@ export class OpenAiResponsesProvider extends OpenAiGenericProvider {
     } catch (err) {
       logger.error(`API call error: ${String(err)}`);
       await deleteFromCache?.();
+      const errorMessage = formatConnectionErrorMessage(err) ?? `API call error: ${String(err)}`;
       return {
-        error: `API call error: ${String(err)}`,
+        error: errorMessage,
         metadata: {
           http: {
             status: 0,

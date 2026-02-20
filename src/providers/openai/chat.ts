@@ -10,6 +10,7 @@ import {
   type GenAISpanResult,
   withGenAISpan,
 } from '../../tracing/genaiTracer';
+import { formatConnectionErrorMessage } from '../../util/fetch/errors';
 import { isJavascriptFile } from '../../util/fileExtensions';
 import { FINISH_REASON_MAP, normalizeFinishReason } from '../../util/finishReason';
 import {
@@ -345,9 +346,7 @@ export class OpenAiChatCompletionProvider extends OpenAiGenericProvider {
       await this.initializationPromise;
     }
     if (this.requiresApiKey() && !this.getApiKey()) {
-      throw new Error(
-        `API key is not set. Set the ${this.config.apiKeyEnvar || 'OPENAI_API_KEY'} environment variable or add \`apiKey\` to the provider config.`,
-      );
+      throw new Error(this.getApiKeyErrorMessage());
     }
 
     // Set up tracing context
@@ -525,8 +524,9 @@ export class OpenAiChatCompletionProvider extends OpenAiGenericProvider {
     } catch (err) {
       logger.error(`API call error: ${String(err)}`);
       await deleteFromCache?.();
+      const errorMessage = formatConnectionErrorMessage(err) ?? `API call error: ${String(err)}`;
       return {
-        error: `API call error: ${String(err)}`,
+        error: errorMessage,
         metadata: {
           http: {
             status: 0,

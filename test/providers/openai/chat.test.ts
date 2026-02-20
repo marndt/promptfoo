@@ -2175,6 +2175,70 @@ Therefore, there are 2 occurrences of the letter "r" in "strawberry".\n\nThere a
       }
     });
 
+    it('should include apiKeyRequired hint when using custom endpoint and API key is missing', async () => {
+      const originalEnv = process.env.OPENAI_API_KEY;
+      delete process.env.OPENAI_API_KEY;
+
+      try {
+        const provider = new OpenAiChatCompletionProvider('gpt-4o-mini', {
+          config: {
+            apiBaseUrl: 'http://localhost:8080/v1',
+            apiKeyRequired: true,
+          },
+        });
+
+        let thrown: Error | null = null;
+        try {
+          await provider.callApi('Test prompt');
+        } catch (e: any) {
+          thrown = e;
+        }
+        expect(thrown).not.toBeNull();
+        expect(thrown!.message).toContain('API key is not set');
+        expect(thrown!.message).toContain(
+          'If this endpoint does not require an API key, you can set `apiKeyRequired: false` in the provider config.',
+        );
+      } finally {
+        if (originalEnv) {
+          process.env.OPENAI_API_KEY = originalEnv;
+        }
+      }
+    });
+
+    it('should return friendly message when connection refused', async () => {
+      const provider = new OpenAiChatCompletionProvider('gpt-4o-mini', {
+        config: {
+          apiBaseUrl: 'http://localhost:8080/v1',
+          apiKeyRequired: false,
+        },
+      });
+      const err = new Error('fetch failed');
+      (err as any).cause = { code: 'ECONNREFUSED' };
+      mockFetchWithCache.mockRejectedValueOnce(err);
+
+      const result = await provider.callApi('Test prompt');
+
+      expect(result.error).toContain('Could not reach the server');
+      expect(result.error).toContain('Is it running?');
+    });
+
+    it('should return reachable hint when ENOTFOUND', async () => {
+      const provider = new OpenAiChatCompletionProvider('gpt-4o-mini', {
+        config: {
+          apiBaseUrl: 'http://localhost:8080/v1',
+          apiKeyRequired: false,
+        },
+      });
+      const err = new Error('fetch failed');
+      (err as any).cause = { code: 'ENOTFOUND' };
+      mockFetchWithCache.mockRejectedValueOnce(err);
+
+      const result = await provider.callApi('Test prompt');
+
+      expect(result.error).toContain('Could not reach the server');
+      expect(result.error).toContain('Check the URL and that the host is reachable');
+    });
+
     it('should demonstrate improved logging for inherited classes', async () => {
       // Create a mock class that extends OpenAiChatCompletionProvider
       class CustomProvider extends OpenAiChatCompletionProvider {

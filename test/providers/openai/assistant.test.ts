@@ -220,9 +220,7 @@ describe('OpenAI Provider', () => {
       const providerNoKey = new OpenAiAssistantProvider('test-assistant-id');
       process.env.OPENAI_API_KEY = '';
 
-      await expect(providerNoKey.callApi('Test prompt')).rejects.toThrow(
-        'OpenAI API key is not set',
-      );
+      await expect(providerNoKey.callApi('Test prompt')).rejects.toThrow('API key is not set');
 
       process.env.OPENAI_API_KEY = 'test-key'; // Restore for other tests
     });

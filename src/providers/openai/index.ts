@@ -81,6 +81,18 @@ export class OpenAiGenericProvider implements ApiProvider {
     return this.config.apiKeyRequired ?? true;
   }
 
+  /**
+   * Error message when API key is missing. For custom endpoints (non-default URL),
+   * appends a neutral hint about apiKeyRequired: false.
+   */
+  getApiKeyErrorMessage(): string {
+    const base = `API key is not set. Set the ${this.config.apiKeyEnvar || 'OPENAI_API_KEY'} environment variable or add \`apiKey\` to the provider config.`;
+    if (this.getApiUrl() !== this.getApiUrlDefault()) {
+      return `${base} If this endpoint does not require an API key, you can set \`apiKeyRequired: false\` in the provider config.`;
+    }
+    return base;
+  }
+
   // @ts-ignore: Params are not used in this implementation
   async callApi(
     _prompt: string,

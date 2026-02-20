@@ -233,7 +233,7 @@ describe('OpenAiTranscriptionProvider', () => {
         const provider = new OpenAiTranscriptionProvider('gpt-4o-transcribe');
 
         await expect(provider.callApi('/path/to/audio.mp3')).rejects.toThrow(
-          'OpenAI API key is not set. Set the OPENAI_API_KEY environment variable or add `apiKey` to the provider config.',
+          'API key is not set. Set the OPENAI_API_KEY environment variable or add `apiKey` to the provider config.',
         );
       } finally {
         process.env.OPENAI_API_KEY = originalEnv;

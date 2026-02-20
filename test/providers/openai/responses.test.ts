@@ -971,7 +971,7 @@ describe('OpenAiResponsesProvider', () => {
 
     vi.spyOn(provider, 'getApiKey').mockReturnValue(undefined);
 
-    await expect(provider.callApi('Test prompt')).rejects.toThrow('OpenAI API key is not set');
+    await expect(provider.callApi('Test prompt')).rejects.toThrow('API key is not set');
   });
 
   it('should handle error in API response data correctly', async () => {
